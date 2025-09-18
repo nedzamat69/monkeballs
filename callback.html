@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify OAuth Callback</title>
+</head>
+<body>
+    <script>
+        // Redirect back to main page with the token
+        if (window.location.hash) {
+            window.location.href = '/' + window.location.hash;
+        } else {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
