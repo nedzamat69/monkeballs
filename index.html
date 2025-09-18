@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify OAuth for Perception</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1DB954, #191414);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 28px;
+        }
+        .subtitle {
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-size: 16px;
+        }
+        .auth-button {
+            background: #1DB954;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .auth-button:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(29, 185, 84, 0.4);
+        }
+        .token-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            display: none;
+        }
+        .token-text {
+            background: #191414;
+            padding: 15px;
+            border-radius: 5px;
+            word-break: break-all;
+            font-family: monospace;
+            margin: 10px 0;
+            border: 1px solid #333;
+        }
+        .copy-button {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .copy-button:hover {
+            background: #1ed760;
+        }
+        .instructions {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        .step {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">♫</div>
+        <h1>Spotify OAuth for Perception</h1>
+        <div class="subtitle">Get your access token for the Spotify overlay</div>
+        
+        <div id="auth-section">
+            <button class="auth-button" onclick="authorizeSpotify()">
+                Connect to Spotify
+            </button>
+            <p style="margin-top: 20px; font-size: 14px; opacity: 0.7;">
+                Click to authorize this app to read your currently playing track
+            </p>
+        </div>
+
+        <div id="token-section" class="token-container">
+            <h3>🎉 Success! Your Access Token:</h3>
+            <div class="token-text" id="access-token"></div>
+            <button class="copy-button" onclick="copyToken()">📋 Copy Token</button>
+            
+            <div class="instructions">
+                <h4>Next Steps:</h4>
+                <div class="step">1. Copy the access token above</div>
+                <div class="step">2. Open your Perception Lua script</div>
+                <div class="step">3. Replace <code>YOUR_ACCESS_TOKEN_HERE</code> with your token</div>
+                <div class="step">4. Save and run the script</div>
+                <div class="step">5. Start playing music on Spotify to see the overlay!</div>
+            </div>
+            
+            <p style="font-size: 12px; margin-top: 20px; opacity: 0.6;">
+                Note: This token expires after 1 hour. Return here to get a new one when needed.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const CLIENT_ID = '15a71328d7ec40bfb5c19abaa489bd9c'; // Replace with your Spotify Client ID
+        const REDIRECT_URI = window.location.origin + '/callback.html';
+        const SCOPES = 'user-read-currently-playing';
+
+        function authorizeSpotify() {
+            const authUrl = `https://accounts.spotify.com/authorize?` +
+                `client_id=${CLIENT_ID}&` +
+                `response_type=token&` +
+                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                `scope=${encodeURIComponent(SCOPES)}`;
+            
+            window.location.href = authUrl;
+        }
+
+        function copyToken() {
+            const tokenText = document.getElementById('access-token').textContent;
+            navigator.clipboard.writeText(tokenText).then(() => {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                button.style.background = '#1ed760';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#1DB954';
+                }, 2000);
+            }).catch(err => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = tokenText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Token copied to clipboard!');
+            });
+        }
+
+        // Check if we're on the callback page
+        if (window.location.pathname === '/callback.html' || window.location.hash.includes('access_token')) {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+            
+            if (accessToken) {
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('token-section').style.display = 'block';
+                document.getElementById('access-token').textContent = accessToken;
+            }
+        }
+    </script>
+</body>
+</html>
